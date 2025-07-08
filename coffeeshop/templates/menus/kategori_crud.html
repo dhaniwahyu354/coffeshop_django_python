@@ -1,0 +1,67 @@
+{% extends 'base.html' %}{% block content %}
+<div class="container mt-4">
+  <h4 class="mb-4">Daftar Kategori Menu</h4>
+  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalTambah">+ Tambah Kategori</button>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Nama Kategori</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in kategori %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ item.nama_kategori }}</td>
+        <td>
+          <!-- Tombol Edit -->
+          <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ item.id }}">Edit</button>
+          <!-- Tombol Delete -->
+          <a href="{% url 'kategori_delete' item.id %}" class="btn btn-danger btn-sm" onclick="return confirmDelete(event)">Delete</a>
+        </td>
+      </tr>
+      <!-- Modal Edit -->
+      {% include 'menus/component/kategori_edit.html' with item=item %} {% empty %} {% endfor %}
+    </tbody>
+  </table>
+</div>
+<!-- Modal Tambah -->
+{% include 'menus/component/kategori_tambah.html' %} {% endblock %}{% block extra_js %}
+
+<script>
+    function confirmDelete(event) {
+      event.preventDefault();
+      const url = event.currentTarget.getAttribute("href");
+  
+      Swal.fire({
+        title: "Yakin ingin menghapus?",
+        text: "Data tidak bisa dikembalikan!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, hapus!"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    }
+  </script>
+  
+  <!-- Notifikasi SweetAlert -->
+  {% if messages %}
+    <script>
+      {% for message in messages %}
+        Swal.fire({
+          icon: 'success',
+          title: '{{ message }}',
+          showConfirmButton: false,
+          timer: 1500
+        });
+      {% endfor %}
+    </script>
+  {% endif %}
+{% endblock %}

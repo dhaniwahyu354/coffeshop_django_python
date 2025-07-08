@@ -1,0 +1,189 @@
+{% comment %} <div class="card">
+    <h5 class="card-header">Daftar Role</h5>
+    <div class="table-responsive text-nowrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nama Role</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="table-border-bottom-0">
+          {% for role in roles %}
+          <tr>
+            <td>{{ role.name }}</td>
+            <td>
+              <a href="#" class="btn btn-sm btn-warning">Edit</a>
+              <a href="#" class="btn btn-sm btn-danger">Hapus</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+   {% endcomment %}
+
+   {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Daftar Role</h5>
+      <a href="{% url 'role_add' %}" class="btn btn-primary" id="addRoleBtn"><i class="bx bx-plus me-1"></i> Tambah Role</a>
+    </div>
+    <div class="table-responsive text-nowrap">
+      <table class="table">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Nama Role</th>
+            <th>Dibuat</th>
+            <th>Diperbarui</th> {# Tambahkan kolom Diperbarui #}
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="table-border-bottom-0">
+          {% for role in roles %}
+          <tr>
+            <td>{{ role.id }}</td>
+            <td>{{ role.name }}</td>
+            <td>{{ role.created_at|date:"d M Y H:i" }}</td>
+            <td>{{ role.updated_at|date:"d M Y H:i" }}</td> {# Tampilkan waktu update #}
+            <td>
+              <a href="{% url 'role_edit' role.id %}" class="btn btn-sm btn-warning edit-role-btn"><i class="bx bx-edit-alt"></i></a>
+              <a href="{% url 'role_delete' role.id %}" class="btn btn-sm btn-danger delete-role-btn" data-role-id="{{ role.id }}" data-role-name="{{ role.name }}"><i class="bx bx-trash"></i></a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center">Tidak ada role ditemukan.</td> {# Ubah colspan #}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="roleActionModalContainer"></div>
+
+  
+  {% block custom_js %}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Fungsi untuk memuat konten modal secara dinamis
+      function loadModalContent(url) {
+        fetch(url)
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('roleActionModalContainer').innerHTML = data;
+            // Pastikan modal diinisialisasi setelah konten dimuat
+            var modalElement = document.getElementById('roleActionModal');
+            if (modalElement) {
+              var roleActionModal = new bootstrap.Modal(modalElement);
+              roleActionModal.show();
+            }
+          })
+          .catch(error => console.error('Error loading modal content:', error));
+      }
+  
+      // Event listener untuk tombol "Tambah Role"
+      document.getElementById('addRoleBtn').addEventListener('click', function(e) {
+        e.preventDefault(); // Mencegah navigasi default
+        loadModalContent(this.href);
+      });
+  
+      // Event listener untuk tombol "Edit Role" (delegasi event karena elemen bisa dinamis)
+      // Menggunakan event delegation pada elemen parent yang statis
+      document.querySelector('.table-responsive').addEventListener('click', function(e) {
+        if (e.target.closest('.edit-role-btn')) {
+          e.preventDefault();
+          const button = e.target.closest('.edit-role-btn');
+          loadModalContent(button.href);
+        }
+      });
+  
+      // Event listener untuk tombol "Delete Role" (delegasi event)
+      document.querySelector('.table-responsive').addEventListener('click', function(e) {
+        if (e.target.closest('.delete-role-btn')) {
+          e.preventDefault(); // Mencegah navigasi default
+          const button = e.target.closest('.delete-role-btn');
+          const roleId = button.dataset.roleId;
+          const roleName = button.dataset.roleName;
+          const deleteUrl = button.href;
+  
+          Swal.fire({
+            title: 'Yakin ingin menghapus role ini?',
+            html: `Anda akan menghapus role <strong>"${roleName}"</strong> (ID: ${roleId}).<br> 
+                   <span class="text-danger"><strong>PERHATIAN:</strong> Jika ada pengguna yang terhubung dengan role ini, mereka mungkin kehilangan akses atau fungsionalitas yang terkait dengan role ini.</span>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // Lakukan permintaan POST untuk menghapus
+              fetch(deleteUrl, {
+                method: 'POST',
+                headers: {
+                  'X-CSRFToken': '{{ csrf_token }}', // Pastikan CSRF token disertakan
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+              })
+              .then(response => {
+                if (!response.ok) {
+                  // Jika respons HTTP bukan 2xx, berarti ada error
+                  return response.text().then(text => { throw new Error(text) });
+                }
+                return response.text(); // Ambil respons dalam bentuk teks
+              })
+              .then(data => {
+                  // Asumsi `data` berisi pesan sukses atau error dari Django messages
+                  // Anda mungkin perlu cara yang lebih robust untuk mendeteksi pesan
+                  if (data.includes('Role berhasil dihapus')) {
+                      Swal.fire(
+                          'Dihapus!',
+                          `Role "${roleName}" berhasil dihapus.`,
+                          'success'
+                      ).then(() => {
+                          window.location.reload(); // Muat ulang halaman setelah sukses
+                      });
+                  } else if (data.includes('Gagal menghapus role')) {
+                      // Jika ada pesan error spesifik dari view (misal karena masih terhubung ke user)
+                      Swal.fire(
+                          'Gagal!',
+                          'Role tidak dapat dihapus. Mungkin masih digunakan oleh pengguna lain.', // Pesan generik atau parsing `data`
+                          'error'
+                      );
+                  } else {
+                      Swal.fire(
+                          'Error!',
+                          'Terjadi kesalahan yang tidak terduga.',
+                          'error'
+                      );
+                  }
+              })
+              .catch(error => {
+                console.error('Ada masalah dengan operasi fetch:', error);
+                Swal.fire(
+                  'Error!',
+                  'Terjadi kesalahan saat menghapus role. Silakan coba lagi.',
+                  'error'
+                );
+              });
+            }
+          });
+        }
+      });
+    });
+  </script>
+  {% endblock %}

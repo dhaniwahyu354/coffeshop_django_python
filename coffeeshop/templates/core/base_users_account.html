@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Users Account{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4">Users Management</h4>
+
+  <ul class="nav nav-pills flex-column flex-md-row mb-3">
+    <li class="nav-item">
+      <a class="nav-link {% if active_tab == 'users' %}active{% endif %}" href="{% url 'usersaccount' %}">
+        <i class="bx bx-user me-1"></i> Users Account
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if active_tab == 'roles' %}active{% endif %}" href="{% url 'role_list' %}">
+        <i class="bx bx-bell me-1"></i> Role
+      </a>
+    </li>
+  </ul>
+
+  {% if active_tab == 'users' %}
+    {% include 'core/users_account/user_list.html' %}
+  {% elif active_tab == 'roles' %}
+    {% include 'core/roles/roll_list.html' %}
+  {% endif %}
+</div>
+{% endblock %}
+

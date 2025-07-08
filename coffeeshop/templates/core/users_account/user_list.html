@@ -1,0 +1,127 @@
+<!-- core/templates/core/users_account/user_list.html -->
+
+<!-- Kartu Daftar Pengguna (awalnya terlihat) -->
+
+{% if messages %} {% for message in messages %}
+<div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+  {{ message }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %} {% endif %}
+<div class="card" id="userListCard">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Data Users</h5>
+    <!-- Tombol Tambah Pengguna: Sekarang memicu JavaScript toggle -->
+    <button type="button" class="btn btn-primary" id="showAddUserFormBtn"><i class="bx bx-plus me-1"></i> Tambah Pengguna</button>
+  </div>
+  <div class="table-responsive text-nowrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>User ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          {# Menambah Email sesuai model User #}
+          <th>Role</th>
+          <th>Dibuat</th>
+          {# Menambah Created At sesuai model User #}
+          <th>Diperbarui</th>
+          <th>Status</th>
+          {# Menambah Status sesuai model User #}
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="table-border-bottom-0">
+        {% for user_obj in users %} {# Menggunakan user_obj untuk menghindari konflik dengan 'user' built-in #}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ user_obj.user_id|default:"-" }}</td>
+          {# Default value jika user_id belum terisi #}
+          <td>{{ user_obj.username }}</td>
+          <td>{{ user_obj.email }}</td>
+          <td>{{ user_obj.role.name|default:"Tidak Ada Role" }}</td>
+          {# Handle jika role null #}
+          <td>{{ user_obj.created_at|date:"d M Y H:i" }}</td>
+          <td>{{ user_obj.updated_at|date:"d M Y H:i" }}</td>
+          <td>
+            {% if user_obj.is_active %}
+            <span class="badge bg-label-success me-1">Aktif</span>
+            {% else %}
+            <span class="badge bg-label-danger me-1">Tidak Aktif</span>
+            {% endif %}
+          </td>
+          <td>
+            {# Tombol Edit dan Hapus Pengguna (non-fungsional sementara) #} {% comment %} <button class="btn btn-sm btn-warning" disabled><i class="bx bx-edit-alt"></i></button>
+            <button class="btn btn-sm btn-danger" disabled><i class="bx bx-trash"></i></button> {% endcomment %}
+
+            <a href="{% url 'user_detail' user_obj.user_id %}" class="btn btn-sm btn-info">Detail</a>
+
+            {% comment %} <a href="#" class="btn btn-sm btn-warning">Edit</a> {% endcomment %}
+
+            {% comment %} <a href="{% url 'user_delete' user_obj.user_id %}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus pengguna ini?')">Hapus</a> {% endcomment %}
+            {% comment %} tombol hapus jika yang login tidak bisa dihapus {% endcomment %}
+            <a href="{% url 'user_delete' user_obj.user_id %}" class="btn btn-sm btn-danger" {% if user_obj == request.user %}disabled{% endif %} onclick="return confirm('Yakin ingin menghapus pengguna ini?')">
+              Hapus
+            </a>
+          </td>
+        </tr>
+
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center">Tidak ada data pengguna.</td>
+          {# Sesuaikan colspan #}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Kartu Form Tambah Pengguna (awalnya disembunyikan) -->
+<div class="card mt-4" id="addUserFormCard" style="display: none">
+  <div class="card-header">
+    {# Card header tanpa flexbox, hanya untuk judul #}
+    <h5 class="mb-0">Tambah Pengguna Baru</h5>
+    {# Judul langsung di sini #}
+  </div>
+  <!-- Konten form dari aksi_user.html akan di-include di sini, setelah card-header -->
+  {% include 'core/users_account/add_user.html' with form=user_add_form modal_title='Tambah Pengguna Baru' action_type='add' %}
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const userListCard = document.getElementById("userListCard");
+    const addUserFormCard = document.getElementById("addUserFormCard");
+    const showAddUserFormBtn = document.getElementById("showAddUserFormBtn");
+    // Dapatkan tombol batal dari dalam form yang di-include
+    const cancelAddUserBtn = addUserFormCard ? addUserFormCard.querySelector("#cancelAddUserBtn") : null;
+
+    if (userListCard && addUserFormCard && showAddUserFormBtn) {
+      // cancelAddUserBtn bisa null di awal, cek di bawah
+      // Event listener untuk tombol "Tambah Pengguna"
+      showAddUserFormBtn.addEventListener("click", function () {
+        userListCard.style.display = "none"; // Sembunyikan daftar
+        addUserFormCard.style.display = "block"; // Tampilkan form
+        // Opsional: Scroll ke atas form jika terlalu panjang
+        addUserFormCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      // Event listener untuk tombol "Batal" di form Tambah Pengguna
+      if (cancelAddUserBtn) {
+        cancelAddUserBtn.addEventListener("click", function () {
+          addUserFormCard.style.display = "none"; // Sembunyikan form
+          userListCard.style.display = "block"; // Tampilkan daftar
+          // Opsional: Scroll kembali ke atas daftar
+          userListCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    }
+
+    // --- Penanganan setelah submit form Add User ---
+    // Karena form Add User akan me-redirect setelah submit (baik sukses/gagal),
+    // halaman akan di-reload dan secara otomatis kembali ke tampilan default
+    // (tabel terlihat, form tersembunyi), dengan pesan notifikasi dari Django.
+    // Tidak perlu JavaScript tambahan di sini untuk toggle setelah submit.
+  });
+</script>

@@ -1,0 +1,59 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold mb-4">Tambah Transaksi</h4>
+
+  {% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="jenis_pesanan" class="form-label">Jenis Pesanan</label>
+      <select name="jenis_pesanan" class="form-select" required>
+        <option value="dine_in">Dine In</option>
+        <option value="takeaway">Takeaway</option>
+        <option value="online">Online</option>
+      </select>
+    </div>
+
+    <div class="row">
+      {% for menu in menus %}
+      <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+          {% if menu.gambar_menu.first %}
+          <img src="{{ menu.gambar_menu.first.gambar.url }}" class="card-img-top" style="height: 200px; object-fit: cover" alt="Gambar Menu" />
+          {% else %}
+          <img src="{% static 'no-image.png' %}" class="card-img-top" style="height: 200px" alt="Tidak ada gambar" />
+          {% endif %}
+          <div class="card-body">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" name="menu_id" value="{{ menu.id }}" id="menu{{ menu.id }}" onclick="toggleInput(this)" />
+              <label class="form-check-label fw-bold" for="menu{{ menu.id }}">{{ menu.nama_menu }}</label>
+            </div>
+            <p class="mb-1">Harga: Rp{{ menu.harga|floatformat:0 }}</p>
+            <p class="mb-1">Kategori: {{ menu.kategori.nama_kategori }}</p>
+            <div class="input-group mt-2">
+              <span class="input-group-text">Qty</span>
+              <input type="number" class="form-control" name="jumlah" id="jumlah{{ menu.id }}" value="1" min="1" disabled />
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <a href="{% url 'list_transaksi' %}" class="btn btn-secondary">← Kembali</a>
+      <button type="submit" class="btn btn-primary">Simpan Transaksi</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function toggleInput(checkbox) {
+    const input = document.getElementById("jumlah" + checkbox.value);
+    input.disabled = !checkbox.checked;
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,265 @@
+{% extends 'base.html' %} 
+{% load static %}
+
+{% block title %}Profil Pengguna{% endblock %} 
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+    <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Akun /</span> Profil</h4>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <h5 class="card-header">Detail Profil</h5>
+                <form id="formAccountSettings" method="POST" action="{% url 'usersprofile' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <div class="d-flex align-items-start align-items-sm-center gap-4">
+                            {# Container untuk gambar profil saat ini dan preview gambar baru #}
+                            <div class="d-flex flex-row align-items-center gap-4">
+                                {% if user.profileuser.foto_user %}
+                                <img src="{{ user.profileuser.foto_user.url }}" alt="Foto Sekarang" class="d-block rounded" height="150" width="auto" id="uploadedAvatar" />
+                                {% else %}
+                                <img src="{% static 'assets/img/avatars/1.png' %}" alt="Foto Default" class="d-block rounded" height="150" width="auto" id="uploadedAvatar" />
+                                {% endif %}
+
+                                {% comment %} preview saat gambar baru di tambahkan {% endcomment %}
+                                <div id="previewContainer" class="d-none rounded border border-primary" style="height: 150px; width: auto; overflow: hidden;"> 
+                                  <img id="previewBaru" class="d-block w-100 h-100 object-fit-cover" alt="Preview Foto Baru" />
+                              </div>
+                            </div>
+
+                            <div class="button-wrapper">
+                                <label for="upload" class="btn btn-primary me-2 mb-4" tabindex="0">
+                                    <span class="d-none d-sm-block">Unggah Foto Baru</span>
+                                    <i class="bx bx-upload d-block d-sm-none"></i>
+                                </label>
+                                <input type="file" id="upload" name="foto_user" class="account-file-input" hidden accept="image/png, image/jpeg" />
+
+                                <button type="button" class="btn btn-outline-secondary account-image-reset mb-4">
+                                    <i class="bx bx-reset d-block d-sm-none"></i>
+                                    <span class="d-none d-sm-block">Reset</span>
+                                </button>
+                                <p class="text-muted mb-0">Izinkan JPG, GIF, atau PNG. Maks. 800KB, foto idel 3x4</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-0" />
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="mb-3 col-md-6">
+                                <label for="username" class="form-label">Username</label>
+                                <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}" readonly />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="email" class="form-label">E-mail</label>
+                                <input class="form-control" type="text" id="email" name="email" value="{{ user.email }}" readonly />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="nama_lengkap" class="form-label">Nama Lengkap</label>
+                                <input class="form-control" type="text" id="nama_lengkap" name="nama_lengkap" value="{{ user.profileuser.nama_lengkap|default:'' }}" />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="no_telp" class="form-label">Nomor Telepon</label>
+                                <input type="text" class="form-control" id="no_telp" name="no_telp" value="{{ user.profileuser.no_telp|default:'' }}" placeholder="081234567890" />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="alamat" class="form-label">Alamat</label>
+                                <textarea id="alamat" name="alamat" class="form-control" placeholder="Jl. Contoh No. 123">{{ user.profileuser.alamat|default:'' }}</textarea>
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label class="form-label" for="jenis_kelamin">Jenis Kelamin</label>
+                                <select id="jenis_kelamin" name="jenis_kelamin" class="select2 form-select">
+                                    <option value="">Pilih Jenis Kelamin</option>
+                                    <option value="L" {% if user.profileuser.jenis_kelamin == 'L' %}selected{% endif %}>Laki-laki</option>
+                                    <option value="P" {% if user.profileuser.jenis_kelamin == 'P' %}selected{% endif %}>Perempuan</option>
+                                </select>
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="tanggal_lahir" class="form-label">Tanggal Lahir</label>
+                                <input class="form-control" type="date" id="tanggal_lahir" name="tanggal_lahir" value="{{ user.profileuser.tanggal_lahir|date:'Y-m-d'|default:'' }}" />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="role" class="form-label">Peran</label>
+                                <input class="form-control" type="text" id="role" name="role" value="{{ user.role }}" readonly />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="user_id" class="form-label">ID Pengguna</label>
+                                <input class="form-control" type="text" id="user_id" name="user_id" value="{{ user.user_id }}" readonly />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="created_at" class="form-label">Akun Dibuat Pada</label>
+                                <input class="form-control" type="text" id="created_at" name="created_at" value="{{ user.created_at|date:'d M Y, H:i' }}" readonly />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="updated_at_user" class="form-label">Akun Diperbarui Pada</label>
+                                <input class="form-control" type="text" id="updated_at_user" name="updated_at_user" value="{{ user.updated_at|date:'d M Y, H:i' }}" readonly />
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="updated_at_profile" class="form-label">Profil Diperbarui Pada</label>
+                                <input class="form-control" type="text" id="updated_at_profile" name="updated_at_profile" value="{{ user.profileuser.updated_at|date:'d M Y, H:i'|default:'Belum pernah' }}" readonly />
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-primary me-2">Simpan Perubahan</button>
+                            <button type="reset" class="btn btn-outline-secondary">Batal</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {% comment %} <div class="card mb-4">
+                <h5 class="card-header">Keamanan</h5>
+                <div class="card-body">
+                    <form id="formChangePassword" method="POST" action="{% url 'nama_url_untuk_ubah_password' %}"> {# Ganti 'nama_url_untuk_ubah_password' dengan URL yang sesuai #}
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="mb-3 col-md-6 form-password-toggle">
+                                <label class="form-label" for="currentPassword">Kata Sandi Saat Ini</label>
+                                <div class="input-group input-group-merge">
+                                    <input class="form-control" type="password" name="currentPassword" id="currentPassword" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" />
+                                    <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="mb-3 col-md-6 form-password-toggle">
+                                <label class="form-label" for="newPassword">Kata Sandi Baru</label>
+                                <div class="input-group input-group-merge">
+                                    <input class="form-control" type="password" id="newPassword" name="newPassword" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" />
+                                    <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                                </div>
+                            </div>
+                            <div class="mb-3 col-md-6 form-password-toggle">
+                                <label class="form-label" for="confirmPassword">Konfirmasi Kata Sandi Baru</label>
+                                <div class="input-group input-group-merge">
+                                    <input class="form-control" type="password" name="confirmPassword" id="confirmPassword" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" />
+                                    <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-12 mb-4">
+                                <p class="fw-semibold">Persyaratan Kata Sandi:</p>
+                                <ul class="list-unstyled">
+                                    <li class="mb-0">Minimal 8 karakter</li>
+                                    <li class="mb-0">Setidaknya satu huruf besar, satu huruf kecil, dan satu angka</li>
+                                    <li class="mb-0">Tidak boleh sama dengan kata sandi sebelumnya</li>
+                                </ul>
+                            </div>
+                            <div class="mt-2">
+                                <button type="submit" class="btn btn-primary me-2">Ubah Kata Sandi</button>
+                                <button type="reset" class="btn btn-outline-secondary">Batal</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div> {% endcomment %}
+            <div class="card">
+                <h5 class="card-header">Hapus Akun</h5>
+                <div class="card-body">
+                    <div class="mb-3 col-12 mb-0">
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading fw-bold mb-1">Apakah Anda yakin ingin menghapus akun Anda?</h6>
+                            <p class="mb-0">Setelah Anda menghapus akun Anda, tidak ada jalan kembali. Harap yakin.</p>
+                        </div>
+                    </div>
+                    <form id="formAccountDeactivation" onsubmit="return false">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="accountActivation" name="accountActivation" />
+                            <label class="form-check-label" for="accountActivation">Saya mengkonfirmasi penonaktifan akun saya</label>
+                        </div>
+                        <button type="submit" class="btn btn-danger deactivate-account">Nonaktifkan Akun</button>
+                    </form>
+                </div>
+            </div>
+            </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const uploadedAvatar = document.getElementById('uploadedAvatar');
+    const previewBaru = document.getElementById('previewBaru');
+    const previewContainer = document.getElementById('previewContainer');
+    const fileInput = document.getElementById('upload');
+    const resetImageButton = document.querySelector('.account-image-reset');
+
+    // Simpan SRC awal dari gambar profil yang sudah ada
+    // Penting: Pastikan path default ini sesuai dengan yang ada di HTML Anda
+    const initialAvatarSrc = uploadedAvatar ? uploadedAvatar.src : '{% static "assets/img/avatars/1.png" %}';
+
+    // Fungsi untuk menampilkan gambar asli dan menyembunyikan pratinjau
+    function showOriginalAvatar() {
+        if (uploadedAvatar) {
+            uploadedAvatar.style.display = 'block';
+        }
+        if (previewContainer) {
+            previewContainer.classList.add('d-none'); // Sembunyikan kontainer pratinjau
+        }
+        if (previewBaru) {
+            previewBaru.src = ''; // Kosongkan src pratinjau
+        }
+    }
+
+    // Fungsi untuk menampilkan pratinjau dan menyembunyikan gambar asli
+    function showPreviewAvatar(src) {
+        if (uploadedAvatar) {
+            uploadedAvatar.style.display = 'none'; // Sembunyikan gambar asli
+        }
+        if (previewBaru && previewContainer) {
+            previewBaru.src = src;
+            previewContainer.classList.remove('d-none'); // Tampilkan kontainer pratinjau
+        }
+    }
+
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function () {
+            const file = this.files[0];
+
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    showPreviewAvatar(e.target.result); // Tampilkan pratinjau
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Jika tidak ada file atau file bukan gambar, kembali ke gambar asli
+                showOriginalAvatar();
+            }
+        });
+    }
+
+    if (resetImageButton) {
+        resetImageButton.addEventListener('click', function () {
+            showOriginalAvatar(); // Tampilkan gambar asli dan sembunyikan pratinjau
+            if (fileInput) {
+                fileInput.value = ''; // Reset input file
+            }
+        });
+    }
+
+    // Toggle visibility password (Sneat's default behavior, pastikan aktif)
+    const passwordToggleElements = document.querySelectorAll('.form-password-toggle .input-group-merge');
+    passwordToggleElements.forEach(function (element) {
+        element.addEventListener('click', function (e) {
+            if (e.target.classList.contains('bx-hide') || e.target.classList.contains('bx-show')) {
+                const passwordInput = element.querySelector('input');
+                const icon = element.querySelector('i');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('bx-hide');
+                    icon.classList.add('bx-show');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('bx-show');
+                    icon.classList.add('bx-hide');
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

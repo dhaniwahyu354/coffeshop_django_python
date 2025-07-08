@@ -1,0 +1,98 @@
+<!-- core/templates/core/users/aksi_user.html -->
+
+<!-- Hapus div "modal fade", "modal-dialog", "modal-content", "modal-header", "modal-footer" dari sini -->
+<!-- Hanya sertakan konten yang akan masuk ke dalam card-header dan card-body/card-footer -->
+
+{% comment %} <h5 class="mb-0">{{ modal_title }}</h5> {# Judul form #} {% endcomment %}
+{# Tidak perlu tombol close di sini, karena tombol batal yang akan menutup form #}
+
+<form method="POST" action="{% url 'user_add' %}" id="userAddForm"> {# Beri ID untuk kemudahan JS #}
+  {% csrf_token %}
+  <div class="card-body"> {# Menggunakan card-body untuk konten form #}
+    <div class="mb-3">
+      <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label }}</label>
+      {{ form.username }}
+      {% if form.username.errors %}
+        {% for error in form.username.errors %}
+          <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+      {{ form.email }}
+      {% if form.email.errors %}
+        {% for error in form.email.errors %}
+          <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <div class="mb-3 form-password-toggle">
+      <label class="form-label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+      <div class="input-group input-group-merge">
+        {{ form.password }}
+        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+      </div>
+      {% if form.password.errors %}
+        {% for error in form.password.errors %}
+          <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <div class="mb-3 form-password-toggle">
+      <label class="form-label" for="{{ form.confirm_password.id_for_label }}">{{ form.confirm_password.label }}</label>
+      <div class="input-group input-group-merge">
+        {{ form.confirm_password }}
+        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+      </div>
+      {% if form.confirm_password.errors %}
+        {% for error in form.confirm_password.errors %}
+          <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label for="{{ form.role.id_for_label }}" class="form-label">{{ form.role.label }}</label>
+      {{ form.role }}
+      {% if form.role.errors %}
+        {% for error in form.role.errors %}
+          <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div> {# Akhir card-body #}
+
+  <div class="card-footer d-flex justify-content-end gap-2"> {# Tombol di card-footer #}
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      id="cancelAddUserBtn" {# Beri ID untuk JS di user_list.html #}
+    >
+      Batal
+    </button>
+    <button type="submit" class="btn btn-primary">Simpan</button>
+  </div> {# Akhir card-footer #}
+</form>
+
+<!-- Script untuk toggle password (tetap di sini, karena terkait langsung dengan elemen form) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Pastikan script ini hanya dijalankan jika form userAddForm ada di DOM
+    const userAddFormElement = document.getElementById('userAddForm');
+    if (userAddFormElement) {
+        const passwordToggleIcons = userAddFormElement.querySelectorAll('.input-group-text.cursor-pointer');
+        passwordToggleIcons.forEach(icon => {
+            icon.addEventListener('click', function() {
+                const passwordField = this.previousElementSibling;
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    this.querySelector('i').classList.replace('bx-hide', 'bx-show');
+                } else {
+                    passwordField.type = 'password';
+                    this.querySelector('i').classList.replace('bx-show', 'bx-hide');
+                }
+            });
+        });
+    }
+  });
+</script>

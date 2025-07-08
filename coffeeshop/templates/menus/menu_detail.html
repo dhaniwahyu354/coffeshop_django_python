@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Detail Menu: {{ menu.nama_menu }}</h4>
+    <div>
+      <a href="{% url 'menus_crud' %}" class="btn btn-secondary">&larr; Kembali</a>
+      <button class="btn btn-primary ms-2" onclick="toggleEditForm()">Edit Menu</button>
+    </div>
+  </div>
+
+  <!-- Informasi Menu (non-edit mode) -->
+  <div id="viewMode">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Nama Menu</label>
+          <div class="form-control">{{ menu.nama_menu }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Harga</label>
+          <div class="form-control">Rp{{ menu.harga }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Deskripsi</label>
+          <div class="form-control">{{ menu.deskripsi|default:"-" }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Kategori</label>
+          <div class="form-control">{{ menu.kategori.nama_kategori|default:"-" }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Status</label>
+          <div class="form-control">{{ menu.get_status_display }}</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h5 class="fw-bold">Gambar Menu</h5>
+        <div class="d-flex flex-wrap gap-2">
+          {% for g in menu.gambar_menu.all %}
+            <img src="{{ g.gambar.url }}" class="rounded shadow-sm" style="height: 150px; width: 150px; object-fit: cover;" alt="Gambar Menu">
+          {% empty %}
+            <p class="text-muted">Belum ada gambar</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Edit (collapse via JS toggle) -->
+  <div id="editMode" class="d-none mt-4">
+    <form method="POST" enctype="multipart/form-data" id="formEditMenu">
+      {% csrf_token %}
+      <div class="row">
+        <div class="col-md-6">
+          <input type="text" name="nama_menu" value="{{ menu.nama_menu }}" class="form-control mb-2" required>
+          <input type="number" name="harga" value="{{ menu.harga }}" class="form-control mb-2" required>
+          <textarea name="deskripsi" class="form-control mb-2">{{ menu.deskripsi }}</textarea>
+          <select name="kategori" class="form-select mb-2">
+            <option value="">-- Pilih Kategori --</option>
+            {% for k in kategoris %}
+              <option value="{{ k.id }}" {% if menu.kategori.id == k.id %}selected{% endif %}>{{ k.nama_kategori }}</option>
+            {% endfor %}
+          </select>
+          <select name="status" class="form-select mb-2">
+            {% for value, label in menu.STATUS_MENU_CHOICES %}
+              <option value="{{ value }}" {% if menu.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+
+          <label class="form-label">Tambah Gambar Baru (maks 3 gambar total)</label>
+          <input type="file" name="gambar" id="gambarInput" class="form-control mb-2" multiple accept="image/*">
+          <div id="previewContainer" class="d-flex flex-wrap gap-2"></div>
+
+          <button type="submit" class="btn btn-success mt-3">Simpan Perubahan</button>
+          <button type="button" class="btn btn-secondary mt-3 ms-2" onclick="toggleEditForm()">Batal</button>
+        </div>
+
+        <div class="col-md-6">
+          <h5 class="fw-bold">Gambar Menu</h5>
+          <div class="d-flex flex-wrap gap-2" id="existingImages">
+            {% for g in menu.gambar_menu.all %}
+              <div class="position-relative">
+                <img src="{{ g.gambar.url }}" alt="gambar" class="rounded shadow-sm" style="width: 150px; height: 150px; object-fit: cover;">
+                <a href="{% url 'hapus_gambar_menu' g.id %}" onclick="return confirmDeleteGambar(event, '{{ g.id }}')" class="btn btn-sm btn-danger position-absolute top-0 end-0">&times;</a>
+              </div>
+            {% empty %}
+              <p class="text-muted">Belum ada gambar</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function toggleEditForm() {
+    document.getElementById("viewMode").classList.toggle("d-none");
+    document.getElementById("editMode").classList.toggle("d-none");
+  }
+
+  function confirmDeleteGambar(event, id) {
+    event.preventDefault();
+    const url = event.currentTarget.getAttribute("href");
+    Swal.fire({
+      title: "Yakin ingin menghapus gambar?",
+      text: `Gambar dengan ID: ${id} akan dihapus`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Hapus",
+      cancelButtonText: "Batal"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = url;
+      }
+    });
+  }
+
+  const gambarInput = document.getElementById("gambarInput");
+  const previewContainer = document.getElementById("previewContainer");
+  let fileList = [];
+
+  gambarInput.addEventListener("change", function (event) {
+    const existingCount = document.querySelectorAll("#existingImages img").length;
+    const newFiles = Array.from(event.target.files);
+
+    if (existingCount + fileList.length + newFiles.length > 3) {
+      Swal.fire({
+        icon: "warning",
+        title: `Maksimal total 3 gambar diperbolehkan`,
+        text: `Saat ini sudah ada ${existingCount} gambar dan ${fileList.length} belum disimpan. Anda hanya bisa menambahkan ${3 - existingCount - fileList.length} gambar lagi.`
+      });
+      return;
+    }
+
+    newFiles.forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      fileList.push(file);
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "position-relative d-inline-block m-1";
+        wrapper.style.width = "150px";
+        wrapper.style.height = "150px";
+
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.className = "img-thumbnail w-100 h-100";
+        img.style.objectFit = "cover";
+
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.innerHTML = "&times;";
+        closeBtn.className = "btn btn-danger btn-sm position-absolute top-0 end-0";
+        closeBtn.style.padding = "2px 6px";
+        closeBtn.onclick = () => {
+          wrapper.remove();
+          fileList = fileList.filter(f => f !== file);
+        };
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(closeBtn);
+        previewContainer.appendChild(wrapper);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    gambarInput.value = "";
+  });
+
+  document.getElementById("formEditMenu").addEventListener("submit", function (event) {
+    event.preventDefault();
+    Swal.fire({
+      title: "Yakin ingin menyimpan perubahan?",
+      text: "Perubahan pada data menu akan disimpan.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Simpan",
+      cancelButtonText: "Batal"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const form = event.target;
+        const formData = new FormData(form);
+        fileList.forEach(file => {
+          formData.append("gambar[]", file);
+        });
+        fetch(window.location.href, {
+          method: "POST",
+          body: formData
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("Gagal menyimpan perubahan");
+          return res.text();
+        })
+        .then(() => location.reload())
+        .catch(err => Swal.fire("Error", err.message, "error"));
+      }
+    });
+  });
+</script>
+{% if messages %}
+  <script>
+    {% for message in messages %}
+      Swal.fire({
+        icon: 'success',
+        title: '{{ message|escapejs }}',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    {% endfor %}
+  </script>
+{% endif %}
+{% endblock %}

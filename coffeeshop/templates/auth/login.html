@@ -1,0 +1,92 @@
+{% extends 'base_auth.html' %} {% block title %}Login{% endblock %} {% block content %}
+<div class="container-xxl">
+  <div class="authentication-wrapper authentication-basic container-p-y">
+    <div class="authentication-inner">
+      <!-- Login Card -->
+      <div class="card">
+        <div class="card-body">
+          <!-- Logo -->
+          {% load static %}
+          <div class="app-brand justify-content-center">
+            <a href="{% url 'login' %}" class="app-brand-link gap-2">
+              <span class="app-brand-logo demo">
+                <img src="{% static 'assets/img/icons/custom/coffee-cup.png' %}" alt="Logo" width="35" height="35" />
+              </span>
+              <span class="app-brand-text demo text-body fw-bolder">Lembayung</span>
+            </a>
+          </div>
+          <!-- /Logo -->
+
+          {% comment %}
+          <h4 class="mb-2 text-center">Welcome to Sneat! 👋</h4>
+          {% endcomment %}
+          <p class="mb-4 text-center">Please sign-in to your account</p>
+
+          {% if messages %} {% for message in messages %}
+          <div class="alert alert-danger">{{ message }}</div>
+          {% endfor %} {% endif %}
+          <form id="formAuthentication" class="mb-3" method="POST" action="{% url 'login' %}">
+            {% csrf_token %} {% comment %} email or username {% endcomment %}
+            <div class="mb-3">
+              <label for="username" class="form-label">Email or Username</label>
+              <input type="text" class="form-control" id="username" name="username" placeholder="Enter your email or username" value="{{ form_data.username|default:'' }}" />
+              {% if errors.username %}
+              <div class="text-danger small mt-1">{{ errors.username }}</div>
+              {% endif %}
+            </div>
+            {% comment %} password {% endcomment %}
+            <div class="mb-3 form-password-toggle">
+              <div class="d-flex justify-content-between">
+                <label class="form-label" for="password">Password</label>
+                {% comment %}
+                <a href="{% url 'password_reset' %}">
+                  <small>Forgot Password?</small>
+                </a>
+                {% endcomment %}
+              </div>
+              <div class="input-group input-group-merge">
+                <input type="password" id="password" class="form-control" name="password" placeholder="Masukkan password" />
+                <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+              </div>
+              {% if errors.password %}
+              <div class="text-danger small mt-1">{{ errors.password }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="captcha" class="form-label d-flex justify-content-between align-items-center">
+                <span>Captcha: Berapa hasil dari <strong id="captcha-text">{{ captcha }}</strong> ?</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-captcha">Refresh</button>
+              </label>
+              <input type="text" class="form-control" id="captcha" name="captcha" placeholder="Jawaban Captcha" value="{{ form_data.captcha|default:'' }}" />
+              {% if errors.captcha %}
+              <div class="text-danger small mt-1">{{ errors.captcha }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="remember-me" name="remember_me" />
+                <label class="form-check-label" for="remember-me"> Remember Me </label>
+              </div>
+            </div>
+            {% comment %} submit button {% endcomment %}
+
+            <div class="mb-3">
+              <button class="btn btn-primary d-grid w-100" type="submit">Sign in</button>
+            </div>
+          </form>
+
+          <p class="text-center">
+            <span>Belum Punya Akun?</span>
+            <a href="{% url 'register' %}">
+              <span>Create an account</span>
+            </a>
+          </p>
+        </div>
+      </div>
+      <!-- /Login Card -->
+    </div>
+  </div>
+</div>
+{% endblock %}

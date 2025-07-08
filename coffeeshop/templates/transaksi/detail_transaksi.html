@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold">Detail Transaksi #{{ transaksi.kode_transaksi }}</h4>
+    <a href="{% url 'list_transaksi' %}" class="btn btn-secondary">← Kembali</a>
+  </div>
+
+  <!-- Info Transaksi -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">User</label>
+            <input type="text" class="form-control" value="{{ transaksi.user.username }}" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Waktu Transaksi</label>
+            <input type="text" class="form-control" value="{{ transaksi.waktu_transaksi|date:'d M Y H:i' }}" readonly>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="jenis_pesanan" class="form-label">Jenis Pesanan</label>
+            <select name="jenis_pesanan" class="form-select">
+              {% for key, val in transaksi.WAKTU_CHOICES %}
+              <option value="{{ key }}" {% if transaksi.jenis_pesanan == key %}selected{% endif %}>{{ val }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="status" class="form-label">Status</label>
+            <select name="status" class="form-select">
+              {% for key, val in transaksi.STATUS_CHOICES %}
+              <option value="{{ key }}" {% if transaksi.status == key %}selected{% endif %}>{{ val }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="text-end">
+          <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Detail Item -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Item Pesanan</h5>
+    </div>
+    <div class="card-body table-responsive">
+      <table class="table table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Menu</th>
+            <th>Harga Satuan</th>
+            <th>Jumlah</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for detail in transaksi.details.all %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ detail.menu.nama_menu }}</td>
+            <td>Rp{{ detail.harga_satuan|floatformat:0 }}</td>
+            <td>{{ detail.jumlah }}</td>
+            <td>Rp{{ detail.subtotal|floatformat:0 }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center">Tidak ada detail transaksi.</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="4" class="text-end">Total</th>
+            <th>Rp{{ transaksi.total|floatformat:0 }}</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
